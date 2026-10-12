@@ -1,214 +1,204 @@
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Button } from '@/components/Button';
-import { TextField } from '@/components/TextField';
+import { Switch, Text, View } from 'react-native';
+import { router, Stack } from 'expo-router';
+import { AppButton } from '@/components/AppButton';
+import { AppInput } from '@/components/AppInput';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { DateField } from '@/components/DateField';
+import { EmptyState } from '@/components/EmptyState';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { ScreenContainer } from '@/components/ScreenContainer';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { colors } from '@/theme/colors';
-import { parseDateInput, toDateInputValue } from '@/utils/formatDate';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { PrioritySelector } from '../components/PrioritySelector';
 import { useTasksStore } from '../store/tasksStore';
-import type { TaskPriority } from '../types/task';
+import type { Task, TaskPriority } from '../types/task';
 
-const PRIORITIES: TaskPriority[] = ['low', 'medium', 'high'];
+const MAX_TITLE_LENGTH = 100;
 
 interface TaskFormScreenProps {
   taskId?: string;
 }
 
-// Shared by both the "new task" and "edit task" routes — when `taskId` is
-// given we look that task up in the store and prefill the form; otherwise
-// it starts blank. This avoids duplicating the form UI in two places.
+// Shared by the "new task" and "edit task" routes. With a `taskId` we look
+// the task up and prefill; without one the form starts blank. This wrapper
+// only decides *which* case we're in; the form itself is below.
 export function TaskFormScreen({ taskId }: TaskFormScreenProps) {
   const existingTask = useTasksStore((state) => state.tasks.find((task) => task.id === taskId));
+  const isLoading = useTasksStore((state) => state.isLoading);
+
+  // The route file's native header is replaced by our own ScreenHeader.
+  const screenOptions = <Stack.Screen options={{ headerShown: false }} />;
+
+  if (taskId && isLoading) return <LoadingScreen />;
+
+  if (taskId && !existingTask) {
+    // E.g. the task was deleted on another device while this screen was open.
+    return (
+      <ScreenContainer edges={['top', 'bottom', 'left', 'right']}>
+        {screenOptions}
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Task not found"
+          subtitle="It may have been deleted."
+          actionLabel="Go back"
+          onAction={() => router.back()}
+        />
+      </ScreenContainer>
+    );
+  }
+
+  return (
+    <>
+      {screenOptions}
+      {/* `key` makes React rebuild the form (and its state) if the task id
+          changes, instead of showing stale field values. */}
+      <TaskForm key={existingTask?.id ?? 'new'} task={existingTask} />
+    </>
+  );
+}
+
+function TaskForm({ task }: { task?: Task }) {
   const createTask = useTasksStore((state) => state.createTask);
   const updateTask = useTasksStore((state) => state.updateTask);
   const deleteTask = useTasksStore((state) => state.deleteTask);
+  const toggleComplete = useTasksStore((state) => state.toggleComplete);
   const userId = useAuthStore((state) => state.user?.uid);
 
-  const [title, setTitle] = useState(existingTask?.title ?? '');
-  const [description, setDescription] = useState(existingTask?.description ?? '');
-  const [dueDateText, setDueDateText] = useState(toDateInputValue(existingTask?.dueDate ?? null));
-  const [priority, setPriority] = useState<TaskPriority>(existingTask?.priority ?? 'medium');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditing = Boolean(task);
 
-  const isEditing = Boolean(existingTask);
+  // useState(initial) only uses `initial` on the first render, which is what
+  // we want for prefilling: after that the user's typing owns the value.
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [description, setDescription] = useState(task?.description ?? '');
+  const [dueDate, setDueDate] = useState<Date | null>(task?.dueDate ?? null);
+  const [priority, setPriority] = useState<TaskPriority>(task?.priority ?? 'medium');
+  const [completed, setCompleted] = useState(task?.completed ?? false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const handleSubmit = async () => {
-    setError(null);
+    setSubmitError(null);
 
-    if (!title.trim()) {
-      setError('Title is required.');
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setTitleError('Please give your task a title.');
       return;
     }
-
-    let dueDate: Date | null = null;
-    if (dueDateText.trim()) {
-      dueDate = parseDateInput(dueDateText);
-      if (!dueDate) {
-        setError('Due date must be in YYYY-MM-DD format, e.g. 2026-10-31.');
-        return;
-      }
+    if (trimmedTitle.length > MAX_TITLE_LENGTH) {
+      setTitleError(`Title must be ${MAX_TITLE_LENGTH} characters or fewer.`);
+      return;
     }
-
     if (!userId) return;
 
     setIsSubmitting(true);
     try {
-      const input = { title: title.trim(), description: description.trim(), dueDate, priority };
-      if (existingTask) {
-        await updateTask(existingTask.id, input);
+      const input = { title: trimmedTitle, description: description.trim(), dueDate, priority };
+      if (task) {
+        await updateTask(task.id, input);
+        if (completed !== task.completed) await toggleComplete(task.id, completed);
       } else {
         await createTask(userId, input);
       }
       router.back();
     } catch {
-      setError('Could not save task. Check your connection and try again.');
+      setSubmitError('Could not save the task. Check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = () => {
-    if (!existingTask) return;
-    Alert.alert('Delete task?', `"${existingTask.title}" will be permanently deleted.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteTask(existingTask.id);
-          router.back();
-        },
-      },
-    ]);
+  const handleDelete = async () => {
+    if (!task) return;
+    setConfirmingDelete(false);
+    await deleteTask(task.id);
+    router.back();
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-        <TextField
-          label="Title"
-          value={title}
-          onChangeText={setTitle}
-          placeholder="e.g. Deliver groceries"
-        />
-        <TextField
-          label="Description"
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Optional details"
-          multiline
-          numberOfLines={3}
-          style={styles.multiline}
-        />
-        <TextField
-          label="Due date"
-          value={dueDateText}
-          onChangeText={setDueDateText}
-          placeholder="YYYY-MM-DD (optional)"
-          keyboardType="numbers-and-punctuation"
-        />
+    <ScreenContainer scroll edges={['top', 'bottom', 'left', 'right']}>
+      <ScreenHeader title={isEditing ? 'Edit task' : 'Create task'} />
 
-        <Text style={styles.label}>Priority</Text>
-        <View style={styles.priorityRow}>
-          {PRIORITIES.map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => setPriority(value)}
-              style={[styles.priorityOption, priority === value && styles.priorityOptionSelected]}
-            >
-              <Text
-                style={[styles.priorityText, priority === value && styles.priorityTextSelected]}
-              >
-                {value[0].toUpperCase() + value.slice(1)}
-              </Text>
-            </Pressable>
-          ))}
+      <AppInput
+        label="Title"
+        icon="create-outline"
+        value={title}
+        onChangeText={(text) => {
+          setTitle(text);
+          setTitleError(null);
+        }}
+        error={titleError ?? undefined}
+        placeholder="e.g. Finish project report"
+        autoCapitalize="sentences"
+        returnKeyType="next"
+        maxLength={MAX_TITLE_LENGTH + 20}
+      />
+      <AppInput
+        label="Description (optional)"
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Add a few details"
+        multiline
+        autoCapitalize="sentences"
+      />
+      <DateField label="Due date" value={dueDate} onChange={setDueDate} />
+      <PrioritySelector value={priority} onChange={setPriority} />
+
+      {isEditing ? (
+        <View className="mb-5 flex-row items-center justify-between rounded-[14px] border border-cardBorder bg-field px-3.5 py-3">
+          <View className="flex-1 pr-3">
+            <Text className="font-sansBold text-[15px] text-ink">Mark as completed</Text>
+            <Text className="font-sans text-[13px] text-muted">
+              {completed ? 'Currently completed' : 'Currently pending'}
+            </Text>
+          </View>
+          <Switch
+            value={completed}
+            onValueChange={setCompleted}
+            trackColor={{ false: colors.subtle, true: colors.primary }}
+            thumbColor="#FFFFFF"
+            accessibilityLabel="Completed"
+          />
         </View>
+      ) : null}
 
-        {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+      {submitError ? (
+        <View className="mb-4 rounded-2xl bg-dangerSoft px-4 py-3">
+          <Text className="font-sansSemi text-sm text-dangerInk">{submitError}</Text>
+        </View>
+      ) : null}
 
-        <Button
-          label={isEditing ? 'Save Changes' : 'Create Task'}
+      <View className="mt-2 gap-2.5">
+        <AppButton
+          label={isEditing ? 'Save changes' : 'Save task'}
           onPress={handleSubmit}
           loading={isSubmitting}
-          disabled={!title.trim()}
         />
-
         {isEditing ? (
-          <View style={styles.deleteButtonWrapper}>
-            <Button label="Delete Task" variant="secondary" onPress={handleDelete} />
-          </View>
-        ) : null}
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <AppButton
+            label="Delete task"
+            variant="dangerSoft"
+            icon="trash-outline"
+            onPress={() => setConfirmingDelete(true)}
+          />
+        ) : (
+          <AppButton label="Cancel" variant="ghost" onPress={() => router.back()} />
+        )}
+      </View>
+
+      <ConfirmDialog
+        visible={confirmingDelete}
+        title="Delete task?"
+        message={`"${task?.title ?? ''}" will be permanently deleted.`}
+        confirmLabel="Delete"
+        destructive
+        icon="trash-outline"
+        onCancel={() => setConfirmingDelete(false)}
+        onConfirm={handleDelete}
+      />
+    </ScreenContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  form: {
-    padding: 20,
-  },
-  multiline: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-    paddingTop: 12,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    marginBottom: 6,
-  },
-  priorityRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
-  },
-  priorityOption: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-  },
-  priorityOptionSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  priorityText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  priorityTextSelected: {
-    color: '#fff',
-  },
-  errorBanner: {
-    color: colors.danger,
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  deleteButtonWrapper: {
-    marginTop: 12,
-  },
-});

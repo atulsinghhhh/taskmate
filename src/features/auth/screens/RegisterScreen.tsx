@@ -1,125 +1,146 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
-import { Button } from '@/components/Button';
-import { TextField } from '@/components/TextField';
-import { colors } from '@/theme/colors';
+import { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { Link, router } from 'expo-router';
+import { useOnboardingStore } from '@/features/onboarding/store/onboardingStore';
+import { AppButton } from '@/components/AppButton';
+import { AppInput } from '@/components/AppInput';
+import { AuthShell } from '../components/AuthShell';
 import { useAuthStore } from '../store/authStore';
+import { validateConfirmPassword, validateEmail, validateNewPassword } from '../validation';
 
 export function RegisterScreen() {
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+  // One object for all field errors keeps the three useState calls from
+  // multiplying; each key is the field's name.
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({});
 
   const register = useAuthStore((state) => state.register);
   const isSubmitting = useAuthStore((state) => state.isSubmitting);
   const serverError = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
 
+  useEffect(() => clearError, [clearError]);
+
+  const clearFieldError = (field: keyof typeof errors) =>
+    setErrors((current) => ({ ...current, [field]: undefined }));
+
   const handleSubmit = async () => {
     clearError();
-    setFormError(null);
 
-    if (password.length < 6) {
-      setFormError('Password must be at least 6 characters.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setFormError('Passwords do not match.');
-      return;
-    }
+    const nextErrors = {
+      name: displayName.trim() ? undefined : 'Please enter your name.',
+      email: validateEmail(email) ?? undefined,
+      password: validateNewPassword(password) ?? undefined,
+      confirm: validateConfirmPassword(password, confirmPassword) ?? undefined,
+    };
+    setErrors(nextErrors);
+    if (nextErrors.name || nextErrors.email || nextErrors.password || nextErrors.confirm) return;
 
     try {
-      await register(email.trim(), password);
+      await register(email.trim(), password, displayName.trim());
+      // Firebase signs the new user in automatically. Make sure onboarding
+      // is marked done (never shown after signing up) and go to the main screen.
+      await useOnboardingStore.getState().completeOnboarding();
+      router.replace('/');
     } catch {
-      // The store already captured a friendly message in `serverError`.
+      // `serverError` now holds e.g. "An account with this email already exists."
     }
   };
 
-  const error = formError ?? serverError;
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AuthShell
+      variant="register"
+      onBack={() => (router.canGoBack() ? router.back() : router.replace('/(auth)/login'))}
+      title="Let’s get started!"
+      subtitle="Create an account to organize your tasks."
+      footer={
+        <>
+          <Text className="font-sans text-[15px] text-muted">Already have an account? </Text>
+          <Link href="/(auth)/login" replace asChild>
+            <Pressable hitSlop={8} className="h-11 justify-center">
+              <Text className="font-sansXBold text-[15px] text-primary">Log in</Text>
+            </Pressable>
+          </Link>
+        </>
+      }
     >
-      <View style={styles.form}>
-        <Text style={styles.title}>Create account</Text>
-        <Text style={styles.subtitle}>Sign up to start tracking your tasks</Text>
+      <AppInput
+        label="Display name"
+        icon="person-outline"
+        value={displayName}
+        onChangeText={(text) => {
+          setDisplayName(text);
+          clearFieldError('name');
+        }}
+        error={errors.name}
+        autoCapitalize="words"
+        autoComplete="name"
+        textContentType="name"
+        returnKeyType="next"
+        placeholder="Your name"
+      />
+      <AppInput
+        label="Email"
+        icon="mail-outline"
+        value={email}
+        onChangeText={(text) => {
+          setEmail(text);
+          clearFieldError('email');
+        }}
+        error={errors.email}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="next"
+        placeholder="you@example.com"
+      />
+      <AppInput
+        label="Password"
+        icon="lock-closed-outline"
+        value={password}
+        onChangeText={(text) => {
+          setPassword(text);
+          clearFieldError('password');
+        }}
+        error={errors.password}
+        secureToggle
+        autoCapitalize="none"
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="next"
+        placeholder="Create a password"
+        hint="At least 6 characters"
+      />
+      <AppInput
+        label="Confirm password"
+        icon="lock-closed-outline"
+        value={confirmPassword}
+        onChangeText={(text) => {
+          setConfirmPassword(text);
+          clearFieldError('confirm');
+        }}
+        error={errors.confirm}
+        secureToggle
+        autoCapitalize="none"
+        autoComplete="new-password"
+        returnKeyType="go"
+        onSubmitEditing={handleSubmit}
+        placeholder="Re-enter your password"
+      />
 
-        <TextField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          placeholder="you@example.com"
-        />
-        <TextField
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password-new"
-          placeholder="At least 6 characters"
-        />
-        <TextField
-          label="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-          placeholder="Re-enter your password"
-        />
+      {serverError ? (
+        <View className="mb-4 rounded-2xl bg-dangerSoft px-4 py-3">
+          <Text className="font-sansSemi text-sm text-dangerInk">{serverError}</Text>
+        </View>
+      ) : null}
 
-        {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
+      <AppButton label="Create account" onPress={handleSubmit} loading={isSubmitting} />
 
-        <Button
-          label="Sign Up"
-          onPress={handleSubmit}
-          loading={isSubmitting}
-          disabled={!email || !password || !confirmPassword}
-        />
-
-        <Link href="/(auth)/login" style={styles.link}>
-          Already have an account? Log in
-        </Link>
-      </View>
-    </KeyboardAvoidingView>
+    </AuthShell>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  form: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    marginTop: 4,
-    marginBottom: 28,
-  },
-  errorBanner: {
-    color: colors.danger,
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  link: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: colors.primary,
-    fontSize: 14,
-  },
-});

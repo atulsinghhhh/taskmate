@@ -4,6 +4,9 @@
 export interface AuthUser {
   uid: string;
   email: string | null;
+  displayName: string | null;
+  // ISO-ish date string from Firebase (user.metadata.creationTime).
+  createdAt: string | null;
 }
 
 export type AuthErrorCode =

@@ -11,6 +11,7 @@ import { DEFAULT_TASK_FILTERS, type Task, type TaskFilters, type TaskInput } fro
 interface TasksState {
   tasks: Task[];
   filters: TaskFilters;
+  searchQuery: string;
   isLoading: boolean;
   error: string | null;
   unsubscribe: (() => void) | null;
@@ -18,6 +19,7 @@ interface TasksState {
   startListening: (userId: string) => void;
   stopListening: () => void;
   setFilters: (filters: Partial<TaskFilters>) => void;
+  setSearchQuery: (query: string) => void;
   clearFilters: () => void;
   clearError: () => void;
   createTask: (userId: string, input: TaskInput) => Promise<void>;
@@ -29,6 +31,7 @@ interface TasksState {
 export const useTasksStore = create<TasksState>((set, get) => ({
   tasks: [],
   filters: DEFAULT_TASK_FILTERS,
+  searchQuery: '',
   isLoading: true,
   error: null,
   unsubscribe: null,
@@ -47,11 +50,19 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   // user's tasks into the next person who logs in on this device.
   stopListening: () => {
     get().unsubscribe?.();
-    set({ unsubscribe: null, tasks: [], isLoading: true });
+    set({
+      unsubscribe: null,
+      tasks: [],
+      isLoading: true,
+      searchQuery: '',
+      filters: DEFAULT_TASK_FILTERS,
+    });
   },
 
   setFilters: (partialFilters) =>
     set((state) => ({ filters: { ...state.filters, ...partialFilters } })),
+
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
 
   clearFilters: () => set({ filters: DEFAULT_TASK_FILTERS }),
 

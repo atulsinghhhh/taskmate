@@ -1,22 +1,15 @@
-// Single source of truth for colors so screens stay visually consistent.
-// Material Design-inspired: one primary brand color, semantic colors for
-// priority/status, and neutral grays for text/backgrounds/borders.
+// Same tokens as tailwind.config.js (see palette.js). Use className
+// (bg-primary, text-ink...) for styling; use this object only where a
+// className can't go, such as icon `color` props and ActivityIndicator.
+import palette from './palette';
+
 export const colors = {
-  primary: '#4F46E5',
-  primaryDark: '#4338CA',
-  background: '#F8FAFC',
-  surface: '#FFFFFF',
-  border: '#E2E8F0',
-
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  textDisabled: '#94A3B8',
-
-  success: '#16A34A',
-  danger: '#DC2626',
-  warning: '#D97706',
-
-  priorityLow: '#16A34A',
-  priorityMedium: '#D97706',
-  priorityHigh: '#DC2626',
+  ...palette,
+  // Legacy names still used by screens that haven't been restyled yet.
+  textPrimary: palette.ink,
+  textSecondary: palette.muted,
+  textDisabled: '#B9B7C9',
+  priorityLow: palette.success,
+  priorityMedium: palette.warning,
+  priorityHigh: palette.danger,
 } as const;

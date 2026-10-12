@@ -4,6 +4,7 @@ import {
   logout as logoutService,
   registerWithEmail,
   subscribeToAuthChanges,
+  updateDisplayName as updateDisplayNameService,
 } from '../services/authService';
 import type { AuthError, AuthUser } from '../types';
 
@@ -16,8 +17,9 @@ interface AuthState {
   isSubmitting: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateDisplayName: (displayName: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -41,10 +43,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  register: async (email, password) => {
+  register: async (email, password, displayName) => {
     set({ isSubmitting: true, error: null });
     try {
-      await registerWithEmail(email, password);
+      const created = await registerWithEmail(email, password, displayName);
+      // onAuthStateChanged fires before the name is written, so push the
+      // finished user into the store ourselves.
+      set({ user: created });
     } catch (error) {
       set({ error: (error as AuthError).message });
       throw error;
@@ -55,6 +60,22 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await logoutService();
+  },
+
+  // Firebase's updateProfile doesn't re-fire onAuthStateChanged, so update
+  // the store's `user` directly once the write succeeds — this is what
+  // makes the Profile screen "refresh" after an edit.
+  updateDisplayName: async (displayName) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      await updateDisplayNameService(displayName);
+      set((state) => (state.user ? { user: { ...state.user, displayName } } : state));
+    } catch (error) {
+      set({ error: (error as AuthError).message });
+      throw error;
+    } finally {
+      set({ isSubmitting: false });
+    }
   },
 
   clearError: () => set({ error: null }),

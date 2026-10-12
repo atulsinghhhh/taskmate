@@ -1,0 +1,28 @@
+declare const palette: {
+  primary: string;
+  primaryDark: string;
+  primarySoft: string;
+  primaryInk: string;
+  background: string;
+  surface: string;
+  field: string;
+  fieldDisabled: string;
+  border: string;
+  cardBorder: string;
+  ink: string;
+  muted: string;
+  subtle: string;
+  success: string;
+  warning: string;
+  danger: string;
+  successSoft: string;
+  warningSoft: string;
+  dangerSoft: string;
+  successInk: string;
+  warningInk: string;
+  dangerInk: string;
+  dangerStrong: string;
+  dangerBorder: string;
+  dangerWash: string;
+};
+export default palette;

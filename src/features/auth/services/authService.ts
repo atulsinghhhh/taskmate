@@ -1,15 +1,22 @@
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { auth } from '@/services/firebase/config';
 import type { AuthError, AuthUser } from '../types';
 
 function toAuthUser(user: User): AuthUser {
-  return { uid: user.uid, email: user.email };
+  return {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    createdAt: user.metadata.creationTime ?? null,
+  };
 }
 
 // Firebase throws errors shaped like { code: "auth/weak-password", message }.
@@ -36,9 +43,18 @@ function toAuthError(error: unknown): AuthError {
   }
 }
 
-export async function registerWithEmail(email: string, password: string): Promise<AuthUser> {
+export async function registerWithEmail(
+  email: string,
+  password: string,
+  displayName: string,
+): Promise<AuthUser> {
   try {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
+    // The account exists at this point; a failed name write shouldn't make
+    // sign-up look like it failed, so the name can be re-added from Profile.
+    if (displayName) {
+      await updateProfile(credential.user, { displayName }).catch(() => {});
+    }
     return toAuthUser(credential.user);
   } catch (error) {
     throw toAuthError(error);
@@ -54,8 +70,32 @@ export async function loginWithEmail(email: string, password: string): Promise<A
   }
 }
 
+export async function sendPasswordReset(email: string): Promise<void> {
+  try {
+    await sendPasswordResetEmail(auth, email);
+  } catch (error) {
+    const authError = toAuthError(error);
+    // "No such user" is reported as success so the screen can't be used to
+    // find out which emails are registered.
+    if ((error as { code?: string })?.code === 'auth/user-not-found') return;
+    throw authError;
+  }
+}
+
 export async function logout(): Promise<void> {
   await signOut(auth);
+}
+
+// updateProfile only takes effect on auth.currentUser and does NOT trigger
+// onAuthStateChanged, so the caller (authStore) is responsible for updating
+// its own `user` state with the new name afterwards.
+export async function updateDisplayName(displayName: string): Promise<void> {
+  if (!auth.currentUser) throw toAuthError({ code: 'unknown' });
+  try {
+    await updateProfile(auth.currentUser, { displayName });
+  } catch (error) {
+    throw toAuthError(error);
+  }
 }
 
 // Fires immediately with the current session (or null), then again every

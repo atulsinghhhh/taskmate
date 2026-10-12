@@ -1,38 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/theme/colors';
+import { Text, View } from 'react-native';
+import { PRIORITY_CONFIG } from '../priority';
 import type { TaskPriority } from '../types/task';
 
-const PRIORITY_COLOR: Record<TaskPriority, string> = {
-  low: colors.priorityLow,
-  medium: colors.priorityMedium,
-  high: colors.priorityHigh,
-};
-
-const PRIORITY_LABEL: Record<TaskPriority, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-};
-
+// A small colored pill with a dot. The only prop is the priority; the colors
+// come from PRIORITY_CONFIG, so the badge can't drift out of sync with the form.
 export function PriorityBadge({ priority }: { priority: TaskPriority }) {
-  const color = PRIORITY_COLOR[priority];
+  const { label, badgeClass, textClass, color } = PRIORITY_CONFIG[priority];
   return (
-    <View style={[styles.badge, { backgroundColor: `${color}1A`, borderColor: color }]}>
-      <Text style={[styles.text, { color }]}>{PRIORITY_LABEL[priority]}</Text>
+    <View className={`h-6 flex-row items-center self-start rounded-full px-2.5 ${badgeClass}`}>
+      <View style={{ backgroundColor: color }} className="mr-1.5 h-1.5 w-1.5 rounded-full" />
+      <Text className={`font-sansBold text-xs ${textClass}`}>{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    alignSelf: 'flex-start',
-  },
-  text: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
