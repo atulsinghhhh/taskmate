@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Tasks are private to the user who created them.
+    // Every task document must carry the owner's uid in "userId".
+    match /tasks/{taskId} {
+      allow read, update, delete: if request.auth != null
+                                   && request.auth.uid == resource.data.userId;
+
+      allow create: if request.auth != null
+                     && request.auth.uid == request.resource.data.userId;
+    }
+  }
+}
