@@ -1,8 +1,6 @@
 export type TaskPriority = 'low' | 'medium' | 'high';
 
-// A task as used throughout the app (dates as JS Date objects — easy to
-// sort/compare/format). Firestore stores dates as Timestamps; the task
-// service converts between the two at the boundary (see tasksService.ts).
+// dates are JS Dates here, tasksService converts from Firestore Timestamps
 export interface Task {
   id: string;
   userId: string;
@@ -15,8 +13,7 @@ export interface Task {
   updatedAt: Date;
 }
 
-// Fields the user actually fills in when creating/editing a task. The
-// server (Firestore) is responsible for id/userId/createdAt/updatedAt.
+// what the user fills in; id/userId/timestamps are set elsewhere
 export interface TaskInput {
   title: string;
   description: string;

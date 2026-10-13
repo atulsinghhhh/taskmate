@@ -4,8 +4,6 @@ interface LogoProps {
   size?: number;
 }
 
-// The TaskMate logo (purple tile with a white check, assets/logo.png).
-// Use this wherever the app shows its brand mark.
 export function Logo({ size = 56 }: LogoProps) {
   return (
     <Image

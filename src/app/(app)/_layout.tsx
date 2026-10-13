@@ -8,12 +8,7 @@ export default function AppLayout() {
   const startListening = useTasksStore((state) => state.startListening);
   const stopListening = useTasksStore((state) => state.stopListening);
 
-  // This group is only reachable when signed in (see root _layout.tsx), so
-  // `userId` is defined here. Starting the Firestore listener at this
-  // layout level (rather than inside the list screen) means it keeps
-  // running while navigating between the tabs and the task/edit screens,
-  // and is cleanly torn down once on logout instead of restarting per
-  // screen. Logging out itself happens from the Profile tab.
+  // listener lives here so it survives tab switches; stops on logout
   useEffect(() => {
     if (!userId) return;
     startListening(userId);

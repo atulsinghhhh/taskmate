@@ -1,6 +1,4 @@
-// Same tokens as tailwind.config.js (see palette.js). Use className
-// (bg-primary, text-ink...) for styling; use this object only where a
-// className can't go, such as icon `color` props and ActivityIndicator.
+// same tokens as palette.js; prefer className, use this for icon colors etc.
 import palette from './palette';
 
 export const colors = {

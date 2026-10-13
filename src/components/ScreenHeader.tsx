@@ -7,9 +7,7 @@ interface ScreenHeaderProps {
   title: string;
 }
 
-// Round back button + centered title for pushed screens (task form, edit
-// profile). The right-hand spacer is the same width as the button, so the
-// title stays truly centered.
+// right spacer matches the back button width to keep the title centered
 export function ScreenHeader({ title }: ScreenHeaderProps) {
   return (
     <View className="mb-5 h-14 flex-row items-center justify-between">

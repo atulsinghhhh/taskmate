@@ -1,8 +1,7 @@
 export function formatDueDate(date: Date | null): string {
   if (!date) return 'No due date';
 
-  // Leave the year out for dates in the current year: "Oct 14" is shorter
-  // and easier to scan on a task card.
+  // skip the year for the current year
   const sameYear = date.getFullYear() === new Date().getFullYear();
   return date.toLocaleDateString(undefined, {
     month: 'short',

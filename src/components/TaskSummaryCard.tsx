@@ -9,7 +9,6 @@ interface TaskSummaryCardProps {
   valueClass?: string;
 }
 
-// Compact stat card. `flex-1` lets three of them share a row equally.
 export function TaskSummaryCard({
   label,
   value,

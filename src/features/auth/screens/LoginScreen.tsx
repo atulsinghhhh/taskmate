@@ -21,7 +21,6 @@ export function LoginScreen() {
   const serverError = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
 
-  // Don't carry an error from this screen over to the sign-up screen.
   useEffect(() => clearError, [clearError]);
 
   const handleSubmit = async () => {
@@ -36,10 +35,8 @@ export function LoginScreen() {
 
     try {
       await login(email.trim(), password);
-      // On success Firebase updates the auth store and the root layout
-      // swaps to the (app) group by itself; no navigation call needed.
+      // root layout swaps to (app) on its own
     } catch {
-      // The store already captured a friendly message in `serverError`.
     }
   };
 
@@ -51,8 +48,7 @@ export function LoginScreen() {
 
     try {
       await sendPasswordReset(email.trim());
-      // Same wording whether or not the account exists, so the screen can't
-      // be used to discover which emails are registered.
+      // same message either way so emails can't be probed
       setResetMessage(`If an account exists for ${email.trim()}, a reset link is on its way.`);
     } catch (error) {
       useAuthStore.setState({ error: (error as { message: string }).message });
@@ -62,7 +58,7 @@ export function LoginScreen() {
   return (
     <AuthShell
       variant="login"
-      // Login is the first auth screen, so back means the Welcome screen.
+      // back goes to Welcome
       onBack={() => useOnboardingStore.getState().resetOnboarding()}
       title="Welcome back!"
       subtitle="Log in to keep your tasks on track."

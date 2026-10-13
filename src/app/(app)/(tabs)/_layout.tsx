@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { colors } from '@/theme/colors';
 
-// Tab icon sitting in a soft lavender pill when active.
+// lavender pill when active
 function TabIcon({
   name,
   focused,
@@ -50,8 +50,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          // TaskListScreen draws its own header ("My Tasks", avatar) and its
-          // own FAB for creating a task.
+          // TaskListScreen has its own header and FAB
           tabBarLabel: ({ focused }) => <TabLabel label="Tasks" focused={focused} />,
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'checkbox' : 'checkbox-outline'} focused={focused} />

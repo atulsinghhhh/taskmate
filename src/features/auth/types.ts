@@ -1,11 +1,8 @@
-// A trimmed-down view of Firebase's User object — we only ever need these
-// two fields anywhere in the UI, so the rest of the app doesn't need to
-// know about Firebase's internal User shape.
 export interface AuthUser {
   uid: string;
   email: string | null;
   displayName: string | null;
-  // ISO-ish date string from Firebase (user.metadata.creationTime).
+  // creationTime string from firebase
   createdAt: string | null;
 }
 

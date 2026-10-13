@@ -22,8 +22,6 @@ export function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  // Reads the same store the Tasks tab listens to — no second Firestore
-  // subscription is started here (see (app)/_layout.tsx for the listener).
   const tasks = useTasksStore((state) => state.tasks);
 
   const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
@@ -34,9 +32,7 @@ export function ProfileScreen() {
   }, [tasks]);
 
   if (!user) {
-    // Unreachable in practice: this route only renders inside the (app)
-    // group, which Stack.Protected in the root layout already guards on
-    // `Boolean(user)`. Kept as a safe fallback rather than assuming.
+    // shouldn't happen, (app) is guarded by Stack.Protected
     return <ScreenContainer>{null}</ScreenContainer>;
   }
 

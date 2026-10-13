@@ -27,11 +27,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       {isAuthInitializing || isOnboardingLoading || !(fontsLoaded || fontError) ? (
-        // Firebase is still checking AsyncStorage for a saved session, and/or
-        // we're still reading the onboarding flag from AsyncStorage, and/or the
-        // Plus Jakarta Sans fonts are still loading. Showing
-        // nothing but a spinner here (instead of onboarding or login) avoids
-        // a flash of the wrong screen before both checks resolve.
+        // still restoring session / onboarding flag / fonts, avoids flashing the wrong screen
         <LoadingScreen />
       ) : (
         <Stack screenOptions={{ headerShown: false }}>
@@ -42,6 +38,8 @@ export default function RootLayout() {
               substitutes for the auth check below, so an unauthenticated
               user can never reach (app) just because onboarding is done. */}
           <Stack.Protected guard={!hasCompletedOnboarding}>
+            {/* welcome is listed first so it is the initial screen */}
+            <Stack.Screen name="welcome" />
             <Stack.Screen name="onboarding" />
           </Stack.Protected>
 

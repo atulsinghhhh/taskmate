@@ -4,17 +4,13 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 interface ScreenContainerProps {
   children: ReactNode;
-  // true: content scrolls and stays reachable when the keyboard opens
-  // (forms). false: a plain fixed layout (lists manage their own scrolling).
+  // scroll + keyboard avoiding, for forms
   scroll?: boolean;
-  // Which screen edges to keep clear of notches / home indicator.
   edges?: Edge[];
   // Extra classes for the inner content wrapper, e.g. "px-5 pt-4".
   className?: string;
 }
 
-// Every screen starts from this: safe-area padding, the app background,
-// and (optionally) keyboard-aware scrolling.
 export function ScreenContainer({
   children,
   scroll = false,

@@ -20,10 +20,7 @@ function formatLong(date: Date): string {
   });
 }
 
-// The two platforms open date pickers differently:
-//  - Android: an imperative native dialog -> DateTimePickerAndroid.open()
-//  - iOS: a component you render; we show it inline under the field.
-// This component hides that difference behind one `value` / `onChange` API.
+// android opens an imperative dialog, ios renders the picker inline
 export function DateField({ label, value, onChange, placeholder = 'Select a date' }: DateFieldProps) {
   const [iosOpen, setIosOpen] = useState(false);
 

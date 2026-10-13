@@ -27,16 +27,14 @@ function sectionKeyFor(task: Task, todayStart: number): TaskSectionKey {
 
   if (dayStart < todayStart) return task.completed ? 'earlier' : 'overdue';
   if (dayStart === todayStart) return 'today';
-  // Compare calendar days via a fresh Date instead of adding 24h, because a
-  // daylight-saving change makes some days 23 or 25 hours long.
+  // compare calendar days, adding 24h breaks on DST
   const tomorrow = new Date(todayStart);
   tomorrow.setDate(tomorrow.getDate() + 1);
   if (dayStart === tomorrow.getTime()) return 'tomorrow';
   return 'upcoming';
 }
 
-// Splits an already-sorted task list into labelled sections for SectionList.
-// Empty sections are dropped so the screen never shows a bare heading.
+// empty sections are dropped
 export function groupTasksByDueDay(tasks: Task[], now: Date = new Date()): TaskSection[] {
   const todayStart = startOfDay(now);
   const buckets = new Map<TaskSectionKey, Task[]>();

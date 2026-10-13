@@ -8,9 +8,6 @@ interface PrioritySelectorProps {
   onChange: (priority: TaskPriority) => void;
 }
 
-// Three side-by-side options. Unselected ones show a colored dot; the
-// selected one fills with its soft tint and a check, so the choice is
-// recognizable even before reading the label.
 export function PrioritySelector({ value, onChange }: PrioritySelectorProps) {
   return (
     <View className="mb-5">

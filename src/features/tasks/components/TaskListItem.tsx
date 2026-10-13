@@ -14,9 +14,6 @@ interface TaskListItemProps {
   onDelete: (task: Task) => void;
 }
 
-// Purely presentational: it shows one task and reports taps through
-// callbacks. It never touches the store or router itself, which is why the
-// screen can decide what "delete" means (confirm dialog first).
 function TaskListItemBase({ task, onToggle, onEdit, onDelete }: TaskListItemProps) {
   const overdue = isOverdue(task.dueDate, task.completed);
 
@@ -88,6 +85,5 @@ const CARD_SHADOW = {
   elevation: 1,
 };
 
-// memo: skip re-rendering rows whose props didn't change (e.g. while typing
-// in the search box).
+// memo so rows don't re-render while typing in search
 export const TaskListItem = memo(TaskListItemBase);

@@ -44,8 +44,6 @@ export function TaskListScreen() {
 
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
-  // Derived data: computed from the store, never stored separately, so it
-  // can't get out of sync. useMemo recomputes only when an input changes.
   const sections = useMemo(
     () => groupTasksByDueDay(getVisibleTasks(tasks, filters, searchQuery)),
     [tasks, filters, searchQuery],
@@ -58,7 +56,6 @@ export function TaskListScreen() {
   const activeFilterCount = countActiveFilters(filters);
   const isNarrowed = activeFilterCount > 0 || searchQuery.trim().length > 0;
 
-  // Stable callbacks so memoized rows don't re-render needlessly.
   const handleToggle = useCallback((t: Task) => toggleComplete(t.id, !t.completed), [toggleComplete]);
   const handleEdit = useCallback((t: Task) => router.push(`/(app)/task/${t.id}`), []);
   const handleDelete = useCallback((t: Task) => setTaskToDelete(t), []);
@@ -72,9 +69,7 @@ export function TaskListScreen() {
     day: 'numeric',
   });
 
-  // Rendered as the list's header so the whole dashboard scrolls together.
-  // It's a JSX element (not an inline component) so the search field keeps
-  // focus while you type.
+  // element, not an inline component, so search keeps focus
   const header = (
     <View className="pb-2 pt-3">
       <View className="mb-4 flex-row items-center justify-between">

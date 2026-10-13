@@ -21,20 +21,17 @@ interface TaskFormScreenProps {
   taskId?: string;
 }
 
-// Shared by the "new task" and "edit task" routes. With a `taskId` we look
-// the task up and prefill; without one the form starts blank. This wrapper
-// only decides *which* case we're in; the form itself is below.
+// used for both new and edit; with a taskId it prefills
 export function TaskFormScreen({ taskId }: TaskFormScreenProps) {
   const existingTask = useTasksStore((state) => state.tasks.find((task) => task.id === taskId));
   const isLoading = useTasksStore((state) => state.isLoading);
 
-  // The route file's native header is replaced by our own ScreenHeader.
   const screenOptions = <Stack.Screen options={{ headerShown: false }} />;
 
   if (taskId && isLoading) return <LoadingScreen />;
 
   if (taskId && !existingTask) {
-    // E.g. the task was deleted on another device while this screen was open.
+    // e.g. deleted on another device
     return (
       <ScreenContainer edges={['top', 'bottom', 'left', 'right']}>
         {screenOptions}
@@ -68,8 +65,7 @@ function TaskForm({ task }: { task?: Task }) {
 
   const isEditing = Boolean(task);
 
-  // useState(initial) only uses `initial` on the first render, which is what
-  // we want for prefilling: after that the user's typing owns the value.
+  // initial only applies on first render so typing isn't overwritten
   const [title, setTitle] = useState(task?.title ?? '');
   const [description, setDescription] = useState(task?.description ?? '');
   const [dueDate, setDueDate] = useState<Date | null>(task?.dueDate ?? null);

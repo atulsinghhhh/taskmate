@@ -1,7 +1,4 @@
-// Single source of truth for the design tokens (TaskMate design system).
-// It's plain CommonJS (.js) because tailwind.config.js must `require` it at
-// build time; colors.ts re-exports it for use in TypeScript code
-// (e.g. icon colors, which can't take a className).
+// design tokens; plain .js so tailwind.config.js can require it
 module.exports = {
   primary: '#6558F5',
   primaryDark: '#5245D8',

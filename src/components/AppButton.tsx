@@ -15,7 +15,7 @@ interface AppButtonProps {
   compact?: boolean;
 }
 
-// Button used for every action. `variant` picks the look:
+// variants:
 //   primary     solid purple (main action)
 //   secondary   white with purple outline (Cancel, Edit profile)
 //   ghost       text only (Skip, Cancel under a primary button)

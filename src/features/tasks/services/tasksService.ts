@@ -16,9 +16,7 @@ import type { Task, TaskInput } from '../types/task';
 
 const tasksCollection = collection(db, 'tasks');
 
-// Firestore stores dates as Timestamp objects, but the rest of the app
-// works with plain JS Dates (easier to sort/compare/format). These two
-// helpers are the only place that conversion happens.
+// Timestamp <-> Date conversion lives here
 function fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
   const data = snapshot.data();
   return {
@@ -34,11 +32,7 @@ function fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Task {
   };
 }
 
-// Subscribes to every task owned by `userId` and calls `onChange` with the
-// full, current list each time anything changes (a task is added, edited,
-// deleted, or toggled — by this device or, in principle, another one).
-// Returns an unsubscribe function the caller must run on unmount to avoid
-// a memory leak / listening forever after the screen is gone.
+// calls onChange with the full list on every change; returns unsubscribe
 export function subscribeToTasks(userId: string, onChange: (tasks: Task[]) => void): () => void {
   const tasksQuery = query(tasksCollection, where('userId', '==', userId));
 

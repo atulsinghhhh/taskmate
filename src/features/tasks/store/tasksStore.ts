@@ -36,7 +36,6 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   error: null,
   unsubscribe: null,
 
-  // Called once, when we know who the signed-in user is (see (app)/_layout.tsx).
   startListening: (userId) => {
     get().unsubscribe?.();
     set({ isLoading: true, error: null });
@@ -46,8 +45,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ unsubscribe });
   },
 
-  // Called on logout so we stop listening and don't leak the previous
-  // user's tasks into the next person who logs in on this device.
+  // clear on logout so the next user doesn't see these tasks
   stopListening: () => {
     get().unsubscribe?.();
     set({
@@ -86,9 +84,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     }
   },
 
-  // Deliberately doesn't re-throw: toggling completion happens from a tap
-  // on the list, where there's no form to show a validation-style error —
-  // the store's `error` field is enough to surface a banner if needed.
+  // no throw, there's no form to show an error; store.error covers it
   toggleComplete: async (taskId, completed) => {
     try {
       await setTaskCompletedService(taskId, completed);

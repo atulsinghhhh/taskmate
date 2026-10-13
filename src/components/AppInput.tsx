@@ -13,9 +13,6 @@ interface AppInputProps extends TextInputProps {
   secureToggle?: boolean;
 }
 
-// Label + input + inline error. `...inputProps` forwards everything a normal
-// TextInput accepts (keyboardType, autoCapitalize, multiline...), so screens
-// configure behavior without this component knowing about it.
 export function AppInput({
   label,
   error,

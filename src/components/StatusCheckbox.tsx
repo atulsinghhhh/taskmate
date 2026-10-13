@@ -6,9 +6,6 @@ interface StatusCheckboxProps {
   onToggle: () => void;
 }
 
-// Round completion checkbox. It's "controlled": it doesn't remember its own
-// state, the parent passes `checked` and reacts to `onToggle`. Here that means
-// the task's `completed` flag in the store is the single truth.
 export function StatusCheckbox({ checked, onToggle }: StatusCheckboxProps) {
   return (
     <Pressable

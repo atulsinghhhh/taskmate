@@ -14,9 +14,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-// Bottom-sheet confirmation, replacing Alert.alert so it matches the app's
-// design on both platforms. The parent owns `visible`; this component only
-// reports choices.
+// bottom sheet instead of Alert.alert so it looks the same on both platforms
 export function ConfirmDialog({
   visible,
   title,

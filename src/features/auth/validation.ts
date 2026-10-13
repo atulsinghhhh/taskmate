@@ -1,5 +1,3 @@
-// Pure functions: text in, error message (or null) out. Keeping them out of
-// the screens makes them easy to reuse (login + sign-up) and easy to test.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const MIN_PASSWORD_LENGTH = 6;

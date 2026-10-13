@@ -10,9 +10,7 @@ import type { AuthError, AuthUser } from '../types';
 
 interface AuthState {
   user: AuthUser | null;
-  // True until Firebase finishes checking AsyncStorage for a saved session.
-  // The root layout uses this to avoid flashing the login screen for a
-  // split second before a saved session is restored.
+  // true until firebase restores the saved session
   isInitializing: boolean;
   isSubmitting: boolean;
   error: string | null;
@@ -33,8 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isSubmitting: true, error: null });
     try {
       await loginWithEmail(email, password);
-      // No need to set `user` here — the subscription below receives the
-      // same update and is the single source of truth for auth state.
+      // user gets set by the subscription below
     } catch (error) {
       set({ error: (error as AuthError).message });
       throw error;
@@ -47,8 +44,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isSubmitting: true, error: null });
     try {
       const created = await registerWithEmail(email, password, displayName);
-      // onAuthStateChanged fires before the name is written, so push the
-      // finished user into the store ourselves.
+      // onAuthStateChanged fires before the name is written, so set user here
       set({ user: created });
     } catch (error) {
       set({ error: (error as AuthError).message });
@@ -62,9 +58,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     await logoutService();
   },
 
-  // Firebase's updateProfile doesn't re-fire onAuthStateChanged, so update
-  // the store's `user` directly once the write succeeds — this is what
-  // makes the Profile screen "refresh" after an edit.
+  // updateProfile doesn't re-fire onAuthStateChanged, so set user here
   updateDisplayName: async (displayName) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -81,10 +75,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearError: () => set({ error: null }),
 }));
 
-// Runs once, the first time this module is imported (from the root layout).
-// Firebase calls this immediately with the current session (null, or
-// restored from AsyncStorage), then again on every login/logout — so
-// `user` always reflects the real auth state without screens polling it.
+// runs once on first import
 subscribeToAuthChanges((user) => {
   useAuthStore.setState({ user, isInitializing: false });
 });

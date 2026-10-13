@@ -10,15 +10,10 @@ interface AuthShellProps {
   title: string;
   subtitle: string;
   children: ReactNode;
-  // Pinned under the form: the "New to TaskMate? Create an account" row.
   footer: ReactNode;
-  // Round back button in the top-left corner.
   onBack: () => void;
 }
 
-// Layout shared by Login and Sign-up: soft lavender decoration, logo tile,
-// heading, then the form passed in as `children`. Both screens differ only
-// in what they put inside, so the branding can't drift apart.
 export function AuthShell({ variant, title, subtitle, children, footer, onBack }: AuthShellProps) {
   const isLogin = variant === 'login';
 

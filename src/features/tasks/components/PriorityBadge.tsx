@@ -2,8 +2,6 @@ import { Text, View } from 'react-native';
 import { PRIORITY_CONFIG } from '../priority';
 import type { TaskPriority } from '../types/task';
 
-// A small colored pill with a dot. The only prop is the priority; the colors
-// come from PRIORITY_CONFIG, so the badge can't drift out of sync with the form.
 export function PriorityBadge({ priority }: { priority: TaskPriority }) {
   const { label, badgeClass, textClass, color } = PRIORITY_CONFIG[priority];
   return (

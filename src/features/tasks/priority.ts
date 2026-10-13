@@ -9,13 +9,7 @@ interface PriorityStyle {
   color: string; // raw hex of the dot, which can't take a className
 }
 
-// One place that decides how each priority looks. PriorityBadge and the
-// priority selector in the task form both read from here, so "high" is
-// always the same red.
-//
-// NOTE: class names are written out in full on purpose. Tailwind finds
-// classes by scanning source text, so `bg-${color}Soft` would never be
-// generated.
+// class names must be written in full, tailwind can't see `bg-${color}Soft`
 export const PRIORITY_CONFIG: Record<TaskPriority, PriorityStyle> = {
   low: {
     label: 'Low',

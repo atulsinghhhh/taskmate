@@ -16,7 +16,6 @@ interface AvatarProps {
   size: number;
 }
 
-// Purple circle with the user's initials.
 export function Avatar({ displayName, email, size }: AvatarProps) {
   return (
     <View

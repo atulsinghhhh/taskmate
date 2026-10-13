@@ -13,8 +13,6 @@ export function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  // One object for all field errors keeps the three useState calls from
-  // multiplying; each key is the field's name.
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; confirm?: string }>({});
 
   const register = useAuthStore((state) => state.register);
@@ -41,12 +39,10 @@ export function RegisterScreen() {
 
     try {
       await register(email.trim(), password, displayName.trim());
-      // Firebase signs the new user in automatically. Make sure onboarding
-      // is marked done (never shown after signing up) and go to the main screen.
+      // firebase signs in automatically, just mark onboarding done
       await useOnboardingStore.getState().completeOnboarding();
       router.replace('/');
     } catch {
-      // `serverError` now holds e.g. "An account with this email already exists."
     }
   };
 
